@@ -1,0 +1,11 @@
+Model Information:
+* title:	Peanut Butter
+* source:	https://sketchfab.com/3d-models/peanut-butter-c76c5972b4ff4517ab03539cfadef99c
+* author:	KKarlie (https://sketchfab.com/KKarlie)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Peanut Butter" (https://sketchfab.com/3d-models/peanut-butter-c76c5972b4ff4517ab03539cfadef99c) by KKarlie (https://sketchfab.com/KKarlie) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
