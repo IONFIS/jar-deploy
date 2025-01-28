@@ -3,14 +3,14 @@
 import React, { useRef, useEffect, Suspense, useCallback, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ScrollControls, Environment, useScroll, Html } from "@react-three/drei"; // Correct Html import
-import { Model } from "./Model"; // Correct Model import
+import { Model } from "./Model"; 
 import gsap from "gsap";
 import { useDispatch, useSelector } from "react-redux";
 import { setAnimationComplete, setPosition, setCurrentSection, selectAnimationState } from '@/app/redux/slice';
 import * as THREE from 'three';
 
 
-// Detect mobile devices to adjust settings
+
 const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
 
 export default function App() {
@@ -45,10 +45,10 @@ export default function App() {
               overflow: "hidden",
             }}
             shadows
-            dpr={isMobile ? [1, 1.5] : [1, 2]} // Optimize device pixel ratio
-            gl={{ antialias: !isMobile }} // Reduce antialiasing on mobile
+            dpr={isMobile ? [1, 1.5] : [1, 2]}
+            gl={{ antialias: !isMobile }} 
             camera={{
-              fov: isMobile ? 30 : 40, // Adjust FOV for mobile
+              fov: isMobile ? 30 : 40,
               position: [10, 3, 6],
               near: 0.1,
               far: 100,
@@ -73,11 +73,10 @@ export default function App() {
   );
 }
 
-// Custom Simple Loading Animation Component using Tailwind CSS
 function LoadingAnimation() {
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-white bg-opacity-80 z-50">
-      <div className="text-2xl font-semibold text-gray-500 animate-fadeIn">
+      <div className="text-2xl font-semibold text-gray-500 animate-fadeIn flex content-center items-center justify-center">
         Loading<span className="dot-animation animate-blink">...</span>
       </div>
     </div>
@@ -156,3 +155,4 @@ function AnimatedModel({ dispatch, onComplete, setPosition, currentSection, setC
 
   return <Model ref={modelRef} position={[0, 0, 0]} />;
 }
+
