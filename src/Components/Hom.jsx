@@ -2,12 +2,13 @@
 
 import React, { useRef, useEffect, Suspense, useCallback, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { ScrollControls, Environment, useScroll, useTexture, useGLTF, useMatcap } from "@react-three/drei";
-import { Model } from "./Model"; // Ensure Model is defined
-import * as THREE from "three";
+import { ScrollControls, Environment, useScroll, Html } from "@react-three/drei"; // Correct Html import
+import { Model } from "./Model"; // Correct Model import
 import gsap from "gsap";
 import { useDispatch, useSelector } from "react-redux";
 import { setAnimationComplete, setPosition, setCurrentSection, selectAnimationState } from '@/app/redux/slice';
+import * as THREE from 'three';
+
 
 // Detect mobile devices to adjust settings
 const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
@@ -21,14 +22,7 @@ export default function App() {
   }, [animationComplete]);
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        width: "100vw",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
+    <div style={{ height: "100vh", width: "100vw", position: "relative", overflow: "hidden" }}>
       <Suspense fallback={<LoadingAnimation />}>
         <div
           style={{
@@ -63,7 +57,6 @@ export default function App() {
             <ambientLight intensity={0.5} />
             <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow />
             <Environment files="/hdr/lobby.hdr" />
-
             <ScrollControls pages={6} damping={0.5}>
               <AnimatedModel
                 dispatch={dispatch}
@@ -91,15 +84,7 @@ function LoadingAnimation() {
   );
 }
 
-const OptimizedModel = React.memo(AnimatedModel);
-
-function AnimatedModel({
-  dispatch,
-  onComplete,
-  setPosition,
-  currentSection,
-  setCurrentSection,
-}) {
+function AnimatedModel({ dispatch, onComplete, setPosition, currentSection, setCurrentSection }) {
   const modelRef = useRef(null);  
   const scroll = useScroll();
   const targetRotation = useRef(new THREE.Vector3(0, 0, 0));
@@ -109,9 +94,8 @@ function AnimatedModel({
   const numSections = 6;
   const sectionHeight = 1 / numSections;
 
-  // State to throttle scroll updates
   const [lastUpdate, setLastUpdate] = useState(0);
-  const throttleDelay = 50; 
+  const throttleDelay = 50;
 
   const handleScrollUpdate = useCallback(() => {
     const newSection = Math.floor(scroll.offset * numSections);
@@ -126,12 +110,11 @@ function AnimatedModel({
 
   useFrame((state, delta) => {
     const now = Date.now();
-    if (now - lastUpdate < throttleDelay) return; 
+    if (now - lastUpdate < throttleDelay) return;
     setLastUpdate(now);
 
     const sectionRatio = scroll.offset;
 
-    // Animation logic to map scroll to 6 sections
     targetRotation.current.set(
       Math.PI * 2 * sectionRatio,
       Math.PI * 2 * sectionRatio,
