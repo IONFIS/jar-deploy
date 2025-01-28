@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useRef, useEffect, Suspense, useCallback } from "react";
+import React, { useRef, useEffect, Suspense, useCallback, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { ScrollControls, Environment, useScroll } from "@react-three/drei";
+import { ScrollControls, Environment, useScroll, useTexture, useGLTF, useMatcap } from "@react-three/drei";
 import { Model } from "./Model"; // Ensure Model is defined
 import * as THREE from "three";
 import gsap from "gsap";
@@ -29,7 +29,6 @@ export default function App() {
         overflow: "hidden",
       }}
     >
-      {/* Suspense loading fallback with custom simple animation */}
       <Suspense fallback={<LoadingAnimation />}>
         <div
           style={{
@@ -92,6 +91,8 @@ function LoadingAnimation() {
   );
 }
 
+const OptimizedModel = React.memo(AnimatedModel);
+
 function AnimatedModel({
   dispatch,
   onComplete,
@@ -99,7 +100,7 @@ function AnimatedModel({
   currentSection,
   setCurrentSection,
 }) {
-  const modelRef = useRef(null);  // Declare the modelRef here
+  const modelRef = useRef(null);  
   const scroll = useScroll();
   const targetRotation = useRef(new THREE.Vector3(0, 0, 0));
   const targetScale = useRef(1);
@@ -108,7 +109,10 @@ function AnimatedModel({
   const numSections = 6;
   const sectionHeight = 1 / numSections;
 
-  // Use a callback to throttle updates to avoid unnecessary state updates
+  // State to throttle scroll updates
+  const [lastUpdate, setLastUpdate] = useState(0);
+  const throttleDelay = 50; 
+
   const handleScrollUpdate = useCallback(() => {
     const newSection = Math.floor(scroll.offset * numSections);
     if (newSection !== currentSection) {
@@ -121,6 +125,10 @@ function AnimatedModel({
   }, [scroll.offset, handleScrollUpdate]);
 
   useFrame((state, delta) => {
+    const now = Date.now();
+    if (now - lastUpdate < throttleDelay) return; 
+    setLastUpdate(now);
+
     const sectionRatio = scroll.offset;
 
     // Animation logic to map scroll to 6 sections
@@ -133,7 +141,6 @@ function AnimatedModel({
     targetPosition.current.set(0, -0.5 * (targetScale.current - 1), 0);
 
     if (modelRef.current) {
-      // Use GSAP for smoother, optimized animations
       gsap.to(modelRef.current.rotation, {
         x: targetRotation.current.x,
         y: targetRotation.current.y,
@@ -158,7 +165,6 @@ function AnimatedModel({
       const { x, y, z } = modelRef.current.position;
       setPosition({ x, y, z });
 
-      // Trigger the onComplete when scroll reaches the end of the animation
       if (scroll.offset >= 1) {
         onComplete();
       }
