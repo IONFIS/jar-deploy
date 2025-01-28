@@ -1,28 +1,52 @@
 "use client";
 
-import React, { useRef, useEffect, Suspense, useCallback, useState } from "react";
+import React, {
+  useRef,
+  useEffect,
+  Suspense,
+  useCallback,
+  useState,
+} from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { ScrollControls, Environment, useScroll, Html } from "@react-three/drei"; // Correct Html import
-import { Model } from "./Model"; 
+import {
+  ScrollControls,
+  Environment,
+  AdaptiveDpr,
+  AdaptiveEvents,
+  PerformanceMonitor,
+  useScroll,
+} from "@react-three/drei";
+import { Model } from "./Model";
 import gsap from "gsap";
 import { useDispatch, useSelector } from "react-redux";
-import { setAnimationComplete, setPosition, setCurrentSection, selectAnimationState } from '@/app/redux/slice';
-import * as THREE from 'three';
-
-
+import {
+  setAnimationComplete,
+  setPosition,
+  setCurrentSection,
+  selectAnimationState,
+} from "@/app/redux/slice";
+import * as THREE from "three";
 
 const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
 
 export default function App() {
   const dispatch = useDispatch();
-  const { animationComplete, position, currentSection } = useSelector(selectAnimationState);
+  const { animationComplete, position, currentSection } =
+    useSelector(selectAnimationState);
 
   useEffect(() => {
     document.body.style.overflow = animationComplete ? "auto" : "hidden";
   }, [animationComplete]);
 
   return (
-    <div style={{ height: "100vh", width: "100vw", position: "relative", overflow: "hidden" }}>
+    <div
+      style={{
+        height: "100vh",
+        width: "100vw",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
       <Suspense fallback={<LoadingAnimation />}>
         <div
           style={{
@@ -44,28 +68,34 @@ export default function App() {
               zIndex: -10,
               overflow: "hidden",
             }}
-            shadows
-            dpr={isMobile ? [1, 1.5] : [1, 2]}
-            gl={{ antialias: !isMobile }} 
+            shadows={false}
+            dpr={isMobile ? [1, 1.25] : [1, 2]} // Resolution change
+            gl={{ antialias: !isMobile }}
             camera={{
-              fov: isMobile ? 30 : 40,
-              position: [10, 3, 6],
+              fov: isMobile ? 35 : 40,
+              position: [8, 3, 8],
               near: 0.1,
               far: 100,
             }}
           >
+            <AdaptiveDpr pixelated />
+            <AdaptiveEvents />
             <ambientLight intensity={0.5} />
-            <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow />
-            <Environment files="/hdr/lobby.hdr" />
-            <ScrollControls pages={6} damping={0.5}>
-              <AnimatedModel
-                dispatch={dispatch}
-                onComplete={() => dispatch(setAnimationComplete(true))}
-                setPosition={(pos) => dispatch(setPosition(pos))}
-                currentSection={currentSection}
-                setCurrentSection={(sec) => dispatch(setCurrentSection(sec))}
-              />
-            </ScrollControls>
+            <directionalLight position={[5, 10, 5]} intensity={1.2} />
+            <PerformanceMonitor
+              onFallback={() => console.log("Performance dropped!")}
+            >
+              <Environment files="/hdr/lobby.hdr" />
+              <ScrollControls pages={6} damping={0.5}>
+                <AnimatedModel
+                  dispatch={dispatch}
+                  onComplete={() => dispatch(setAnimationComplete(true))}
+                  setPosition={(pos) => dispatch(setPosition(pos))}
+                  currentSection={currentSection}
+                  setCurrentSection={(sec) => dispatch(setCurrentSection(sec))}
+                />
+              </ScrollControls>
+            </PerformanceMonitor>
           </Canvas>
         </div>
       </Suspense>
@@ -83,31 +113,48 @@ function LoadingAnimation() {
   );
 }
 
-function AnimatedModel({ dispatch, onComplete, setPosition, currentSection, setCurrentSection }) {
-  const modelRef = useRef(null);  
+function AnimatedModel({
+  dispatch,
+  onComplete,
+  setPosition,
+  currentSection,
+  setCurrentSection,
+}) {
+  const modelRef = useRef(null);
   const scroll = useScroll();
   const targetRotation = useRef(new THREE.Vector3(0, 0, 0));
   const targetScale = useRef(1);
   const targetPosition = useRef(new THREE.Vector3(0, 0, 0));
 
   const numSections = 6;
-  const sectionHeight = 1 / numSections;
-
+  const throttleDelay = 50; // Frame rate change karne ke liye
   const [lastUpdate, setLastUpdate] = useState(0);
-  const throttleDelay = 50;
 
-  const handleScrollUpdate = useCallback(() => {
-    const newSection = Math.floor(scroll.offset * numSections);
-    if (newSection !== currentSection) {
-      setCurrentSection(newSection);
-    }
-  }, [scroll.offset, currentSection, numSections, setCurrentSection]);
+  const throttle = (fn, delay) => {
+    let lastCall = 0;
+    return (...args) => {
+      const now = Date.now();
+      if (now - lastCall < delay) return;
+      lastCall = now;
+      return fn(...args);
+    };
+  };
+
+  const handleScrollUpdate = useCallback(
+    throttle(() => {
+      const newSection = Math.floor(scroll.offset * numSections);
+      if (newSection !== currentSection) {
+        setCurrentSection(newSection);
+      }
+    }, throttleDelay),
+    [scroll.offset, currentSection, numSections, setCurrentSection]
+  );
 
   useEffect(() => {
     handleScrollUpdate();
   }, [scroll.offset, handleScrollUpdate]);
 
-  useFrame((state, delta) => {
+  useFrame(() => {
     const now = Date.now();
     if (now - lastUpdate < throttleDelay) return;
     setLastUpdate(now);
@@ -126,21 +173,21 @@ function AnimatedModel({ dispatch, onComplete, setPosition, currentSection, setC
       gsap.to(modelRef.current.rotation, {
         x: targetRotation.current.x,
         y: targetRotation.current.y,
-        duration: 0.1,
+        duration: 0.2,
         ease: "power3.out",
       });
       gsap.to(modelRef.current.scale, {
         x: targetScale.current,
         y: targetScale.current,
         z: targetScale.current,
-        duration: 0.1,
+        duration: 0.2,
         ease: "power3.out",
       });
       gsap.to(modelRef.current.position, {
         x: targetPosition.current.x,
         y: targetPosition.current.y,
         z: targetPosition.current.z,
-        duration: 0.1,
+        duration: 0.2,
         ease: "power3.out",
       });
 
@@ -155,4 +202,3 @@ function AnimatedModel({ dispatch, onComplete, setPosition, currentSection, setC
 
   return <Model ref={modelRef} position={[0, 0, 0]} />;
 }
-
