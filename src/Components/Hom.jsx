@@ -103,10 +103,11 @@ export default function App() {
   );
 }
 
+// Custom Simple Loading Animation Component using Tailwind CSS
 function LoadingAnimation() {
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-white bg-opacity-80 z-50">
-      <div className="text-2xl font-semibold text-gray-500 animate-fadeIn flex content-center items-center justify-center">
+      <div className="text-2xl font-semibold text-gray-500 animate-fadeIn">
         Loading<span className="dot-animation animate-blink">...</span>
       </div>
     </div>
@@ -125,6 +126,9 @@ function AnimatedModel({
   const targetRotation = useRef(new THREE.Vector3(0, 0, 0));
   const targetScale = useRef(1);
   const targetPosition = useRef(new THREE.Vector3(0, 0, 0));
+  const [animationStarted, setAnimationStarted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); // Track visibility
+  const [animationTriggered, setAnimationTriggered] = useState(false); // Track if animation has been triggered
 
   const numSections = 6;
   const throttleDelay = 50; // Frame rate change karne ke liye
@@ -156,7 +160,7 @@ function AnimatedModel({
 
   useFrame(() => {
     const now = Date.now();
-    if (now - lastUpdate < throttleDelay) return;
+    if (now - lastUpdate < throttleDelay) return; // Throttle frame updates
     setLastUpdate(now);
 
     const sectionRatio = scroll.offset;
@@ -169,8 +173,9 @@ function AnimatedModel({
     targetScale.current = 2 - sectionRatio * 1.3;
     targetPosition.current.set(0, -0.5 * (targetScale.current - 1), 0);
 
-    if (modelRef.current) {
-      gsap.to(modelRef.current.rotation, {
+    if (groupRef.current) {
+      // Apply smoother updates to group using gsap with fewer updates
+      gsap.to(groupRef.current.rotation, {
         x: targetRotation.current.x,
         y: targetRotation.current.y,
         duration: 0.2,
@@ -191,7 +196,24 @@ function AnimatedModel({
         ease: "power3.out",
       });
 
-      const { x, y, z } = modelRef.current.position;
+      // Animate scale individually (workaround to prevent scale modification error)
+      gsap.to(groupRef.current.scale, {
+        x: targetScale.current,
+        y: targetScale.current,
+        z: targetScale.current,
+        duration: 0.05,
+        ease: "power3.out",
+      });
+
+      gsap.to(groupRef.current.position, {
+        x: targetPosition.current.x,
+        y: targetPosition.current.y,
+        z: targetPosition.current.z,
+        duration: 0.05,
+        ease: "power3.out",
+      });
+
+      const { x, y, z } = groupRef.current.position;
       setPosition({ x, y, z });
 
       if (scroll.offset >= 1) {
